@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MagicMall Gameshop – Photo grid splitter</title>
+<title>MagicMall Gameshop – Photo & video grid splitter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
@@ -49,13 +49,13 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
 .stage{display:none;position:relative;width:100%}
 .drop.has .stage{display:block;animation:pop .6s cubic-bezier(.2,1.2,.4,1)}
 @keyframes pop{from{opacity:0;transform:scale(.92)}}
-.stage img{display:block;width:100%;max-height:420px;object-fit:contain;background:#000}
+.stage img,.stage video{display:block;width:100%;max-height:420px;object-fit:contain;background:#000}
 .grid{position:absolute;inset:0;pointer-events:none}
 .grid i{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 8px rgba(0,0,0,.6);transform-origin:0 0;animation:draw .7s .3s cubic-bezier(.2,.8,.2,1) both}
 .grid i.v{top:0;bottom:0;width:1.5px}.grid i.h{left:0;right:0;height:1.5px;transform-origin:0 0}
 .grid i.v{animation-name:drawY}.grid i.h{animation-name:drawX}
 @keyframes drawY{from{transform:scaleY(0)}}@keyframes drawX{from{transform:scaleX(0)}}
-.chip{position:absolute;left:12px;bottom:12px;background:rgba(7,8,15,.75);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.8rem;backdrop-filter:blur(8px)}
+.chip{position:absolute;left:12px;top:12px;background:rgba(7,8,15,.75);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.8rem;backdrop-filter:blur(8px);pointer-events:none}
 .btn{display:block;margin:22px auto 0;border:0;border-radius:999px;padding:16px 46px;font:700 1rem 'Unbounded',sans-serif;color:#07080f;background:linear-gradient(110deg,var(--b),#9bffe9);cursor:pointer;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,opacity .3s}
 .btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 14px 36px rgba(46,230,197,.4)}
 .btn:active:not(:disabled){transform:scale(.97)}
@@ -91,7 +91,7 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
 <main>
   <header class="hero-in">
     <h1><span>MagicMall<br>Gameshop</span></h1>
-    <p class="sub">Free photo grid splitter. Cut one picture into a seamless grid for your profile. It all runs in your browser, so your image never leaves your device.</p>
+    <p class="sub">Free photo &amp; video grid splitter. Cut one picture or clip into a seamless grid for your profile. It all runs in your browser, so your files never leave your device.</p>
     <a class="tg" id="tgTop" href="#" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.1a1.3 1.3 0 0 0-1.4-.2L2.8 10.8c-1.1.4-1.1 1.1-.2 1.4l4.5 1.4 1.7 5.3c.2.6.4.8.8.8.3 0 .5-.1.7-.3l2.2-2.1 4.5 3.3c.8.5 1.4.2 1.6-.8L22.4 5.3c.3-1.1-.2-1.6-.5-1.2zM9 13.6l9.2-5.8c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.3L9 13.6z"/></svg>Join our Telegram</a>
   </header>
   <section class="card hero-in" style="animation-delay:.3s">
@@ -108,19 +108,23 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
         <div class="seg" id="bg"><span class="pill"></span>
           <button aria-pressed="true" data-v="#ffffff">White</button><button aria-pressed="false" data-v="#000000">Black</button>
         </div></div>
+      <div class="group" id="auWrap" style="display:none"><div class="label">Video audio</div>
+        <div class="seg" id="au"><span class="pill"></span>
+          <button aria-pressed="true" data-v="1">Tile 1 only</button><button aria-pressed="false" data-v="0">Mute</button>
+        </div></div>
     </div>
-    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an image">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an image or video">
       <div class="empty"><div class="ring"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
-        <b>Drop an image here</b><small>or tap to browse · JPG, PNG, WebP</small></div>
-      <div class="stage"><img id="pv" alt="Your uploaded image"><div class="grid" id="gridOv"></div><div class="chip" id="chip"></div></div>
-      <input type="file" id="file" accept="image/*" hidden>
+        <b>Drop an image or video here</b><small>or tap to browse · JPG, PNG, WebP, MP4, MOV, WebM</small></div>
+      <div class="stage"><img id="pv" alt="Your uploaded image"><video id="pvv" muted loop playsinline autoplay style="display:none"></video><div class="grid" id="gridOv"></div><div class="chip" id="chip"></div></div>
+      <input type="file" id="file" accept="image/*,video/*" hidden>
     </div>
-    <button class="btn" id="go" disabled>Split image</button>
+    <button class="btn" id="go" disabled>Split</button>
   </section>
 
   <section id="out">
     <h2>Your tiles</h2>
-    <p>Tap a tile to save it, or grab everything at once. Post them in reverse order so the grid lines up.</p>
+    <p id="outTxt">Tap a tile to save it, or grab everything at once. Post them in reverse order so the grid lines up.</p>
     <div class="tiles" id="tiles"></div>
     <button class="btn" id="zipBtn">Download all (.zip)</button>
   </section>
@@ -130,7 +134,7 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
 <script>
 const TELEGRAM_URL='https://t.me/Magic_Mall_Game_Shop'; // <- put your channel link here
 const W=1080,H=1350,SH=1920;
-let mode='1x3',fmt='post',bg='#ffffff',img=null,name='image',tiles=[];
+let mode='1x3',fmt='post',bg='#ffffff',aud='1',img=null,vurl=null,isV=false,busy=false,name='image',tiles=[],blobs=[],ext='mp4';
 const $=s=>document.querySelector(s);
 
 document.getElementById('tgTop').href=TELEGRAM_URL;
@@ -142,27 +146,33 @@ addEventListener('resize',init);init();f()})();
 
 /* segmented controls with sliding pill */
 function seg(id,cb){const el=$(id),pill=el.querySelector('.pill'),bs=[...el.querySelectorAll('button')];
-function place(){const a=bs.find(b=>b.getAttribute('aria-pressed')=='true');pill.style.width=a.offsetWidth+'px';pill.style.transform=`translateX(${a.offsetLeft-4}px)`}
-bs.forEach(b=>b.onclick=()=>{bs.forEach(o=>o.setAttribute('aria-pressed',o===b));place();cb(b.dataset.v)});
+function place(){const a=bs.find(b=>b.getAttribute('aria-pressed')=='true');if(!a.offsetWidth)return;pill.style.width=a.offsetWidth+'px';pill.style.transform=`translateX(${a.offsetLeft-4}px)`}
+bs.forEach(b=>b.onclick=()=>{if(busy)return toast('Wait until recording finishes');bs.forEach(o=>o.setAttribute('aria-pressed',o===b));place();cb(b.dataset.v)});
 new ResizeObserver(place).observe(el);place();return place}
-const pm=seg('#mode',v=>{mode=v;drawGrid();reset()});
+seg('#mode',v=>{mode=v;drawGrid();reset()});
 seg('#fmt',v=>{fmt=v;$('#bgWrap').style.display=v=='story'?'':'none';reset()});
 seg('#bg',v=>{bg=v;reset()});
-new MutationObserver(()=>{}).observe(document.body,{});
+seg('#au',v=>{aud=v;reset()});
 function reset(){$('#out').style.display='none'}
 
 /* upload */
-const drop=$('#drop'),file=$('#file');
+const drop=$('#drop'),file=$('#file'),pvv=$('#pvv');
 drop.onclick=e=>{if(e.target!==file)file.click()};
 drop.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();file.click()}};
 file.onchange=()=>file.files[0]&&load(file.files[0]);
 ['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];f&&load(f)});
-function load(f){if(!f.type.startsWith('image/'))return toast('Please choose an image file');
-name=f.name.replace(/\.[^.]+$/,'');const u=URL.createObjectURL(f),i=new Image();
-i.onload=()=>{img=i;$('#pv').src=u;drop.classList.add('has');$('#go').disabled=false;
-$('#chip').textContent=`${f.name} · ${i.naturalWidth}×${i.naturalHeight}`;drawGrid();reset();
+function ready(f,w,h){$('#go').disabled=false;drop.classList.add('has');$('#chip').textContent=`${f.name} · ${w}×${h}`;drawGrid();reset();
+$('#auWrap').style.display=isV?'':'none';$('#go').textContent=isV?'Split video':'Split image'}
+function load(f){if(busy)return toast('Wait until recording finishes');
+const v=f.type.startsWith('video/');if(!v&&!f.type.startsWith('image/'))return toast('Please choose an image or video');
+name=f.name.replace(/\.[^.]+$/,'');const u=URL.createObjectURL(f);
+if(v){if(!window.MediaRecorder)return toast('This browser cannot record video');
+pvv.onloadedmetadata=()=>{isV=true;img=null;vurl=u;$('#pv').style.display='none';pvv.style.display='block';pvv.play().catch(()=>{});ready(f,pvv.videoWidth,pvv.videoHeight)};
+pvv.onerror=()=>toast('Could not read that video');pvv.src=u;return}
+const i=new Image();
+i.onload=()=>{isV=false;img=i;vurl=null;pvv.pause();pvv.style.display='none';$('#pv').style.display='block';$('#pv').src=u;ready(f,i.naturalWidth,i.naturalHeight);
 if(i.naturalWidth<parseInt(mode[2])*W)toast('Small image: tiles will be upscaled and may look soft')};
 i.onerror=()=>toast('Could not read that image');i.src=u}
 function drawGrid(){const [r,c]=mode.split('x').map(Number),g=$('#gridOv');g.innerHTML='';
@@ -170,29 +180,58 @@ for(let k=1;k<c;k++)g.insertAdjacentHTML('beforeend',`<i class="v" style="left:$
 for(let k=1;k<r;k++)g.insertAdjacentHTML('beforeend',`<i class="h" style="top:${k/r*100}%"></i>`)}
 drawGrid();
 
-/* split */
-$('#go').onclick=()=>{if(!img)return;const [r,c]=mode.split('x').map(Number),tw=c*W,th=r*H;
-/* center-crop to the grid's aspect ratio so nothing is stretched */
-const ar=tw/th,ia=img.naturalWidth/img.naturalHeight;let sw=img.naturalWidth,sh=img.naturalHeight,sx=0,sy=0;
-if(ia>ar){sw=sh*ar;sx=(img.naturalWidth-sw)/2}else{sh=sw/ar;sy=(img.naturalHeight-sh)/2}
-const big=document.createElement('canvas');big.width=tw;big.height=th;const bx=big.getContext('2d');
-bx.imageSmoothingQuality='high';bx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
-const box=$('#tiles');box.innerHTML='';tiles=[];let n=0;
-for(let y=0;y<r;y++)for(let x=0;x<c;x++){const cv=document.createElement('canvas'),story=fmt=='story';
-cv.width=W;cv.height=story?SH:H;const cx=cv.getContext('2d');
-if(story){cx.fillStyle=bg;cx.fillRect(0,0,W,SH)}
-cx.drawImage(big,x*W,y*H,W,H,0,story?(SH-H)/2:0,W,H);
-tiles.push(cv);const idx=n++,d=document.createElement('div');d.className='tile';d.tabIndex=0;
+/* shared helpers */
+function crop(w,h,r,c){const ar=c*W/(r*H),ia=w/h;let sw=w,sh=h,sx=0,sy=0;
+if(ia>ar){sw=sh*ar;sx=(w-sw)/2}else{sh=sw/ar;sy=(h-sh)/2}return{sw,sh,sx,sy}}
+function mkTile(idx){const story=fmt=='story',cv=document.createElement('canvas');cv.width=W;cv.height=story?SH:H;
+const cx=cv.getContext('2d');if(story){cx.fillStyle=bg;cx.fillRect(0,0,W,SH)}
+tiles.push(cv);const d=document.createElement('div');d.className='tile';d.tabIndex=0;
 d.style.animationDelay=idx*.09+'s';d.style.setProperty('--r',(idx%2?-3:3)+'deg');
 d.innerHTML='<span>Save tile '+(idx+1)+'</span>';d.prepend(cv);
-d.onclick=()=>save(idx);d.onkeydown=e=>{if(e.key=='Enter')save(idx)};box.appendChild(d)}
-const out=$('#out');out.style.display='block';setTimeout(()=>out.scrollIntoView({behavior:'smooth',block:'start'}),150)};
+d.onclick=()=>save(idx);d.onkeydown=e=>{if(e.key=='Enter')save(idx)};$('#tiles').appendChild(d);return{cx,off:story?(SH-H)/2:0}}
+function showOut(){const out=$('#out');out.style.display='block';setTimeout(()=>out.scrollIntoView({behavior:'smooth',block:'start'}),150)}
+
+/* split */
+$('#go').onclick=()=>{if(busy)return;const [r,c]=mode.split('x').map(Number);$('#tiles').innerHTML='';tiles=[];blobs=[];
+if(isV)return splitVideo(r,c);if(!img)return;
+const tw=c*W,th=r*H,{sw,sh,sx,sy}=crop(img.naturalWidth,img.naturalHeight,r,c);
+const big=document.createElement('canvas');big.width=tw;big.height=th;const bx=big.getContext('2d');
+bx.imageSmoothingQuality='high';bx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
+$('#outTxt').textContent='Tap a tile to save it, or grab everything at once. Post them in reverse order so the grid lines up.';
+let n=0;for(let y=0;y<r;y++)for(let x=0;x<c;x++){const t=mkTile(n++);t.cx.drawImage(big,x*W,y*H,W,H,0,t.off,W,H)}
+showOut()};
+
+async function splitVideo(r,c){busy=true;const go=$('#go');go.disabled=true;go.textContent='Preparing…';
+const v=document.createElement('video');v.src=vurl;v.playsInline=true;v.preload='auto';
+let ac=null,track=null;
+try{await new Promise((ok,no)=>{v.onloadeddata=ok;v.onerror=no;v.load()})}catch(e){busy=false;go.disabled=false;go.textContent='Split video';return toast('Could not read that video')}
+const mime=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+ext=mime.includes('mp4')?'mp4':'webm';
+if(aud=='1'){try{ac=new AudioContext();const s=ac.createMediaElementSource(v),d=ac.createMediaStreamDestination();s.connect(d);track=d.stream.getAudioTracks()[0];await ac.resume()}catch(e){track=null}}
+const {sw,sh,sx,sy}=crop(v.videoWidth,v.videoHeight,r,c),cells=[],recs=[];let n=0,left=r*c;
+for(let y=0;y<r;y++)for(let x=0;x<c;x++){const t=mkTile(n),st=t.cx.canvas.captureStream(30);
+if(n==0&&track)st.addTrack(track);
+const mr=new MediaRecorder(st,mime?{mimeType:mime,videoBitsPerSecond:6e6}:{}),ch=[],i=n;
+mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+mr.onstop=()=>{blobs[i]=new Blob(ch,{type:mr.mimeType||mime});if(!--left){busy=false;go.disabled=false;go.textContent='Split video';
+$('#outTxt').textContent='Done! Tap a tile to save it as .'+ext+', or grab everything at once. Post them in reverse order so the grid lines up.';toast('All tiles ready')}};
+cells.push({...t,x,y});recs.push(mr);n++}
+$('#outTxt').textContent='Recording… keep this tab open and visible until it finishes.';showOut();
+const dw=sw/c,dh=sh/r,tick=()=>{if(v.ended)return;for(const k of cells)k.cx.drawImage(v,sx+k.x*dw,sy+k.y*dh,dw,dh,0,k.off,W,H);
+go.textContent='Recording '+Math.min(99,Math.round(v.currentTime/v.duration*100))+'%';
+v.requestVideoFrameCallback?v.requestVideoFrameCallback(tick):requestAnimationFrame(tick)};
+v.onended=()=>setTimeout(()=>{recs.forEach(m=>m.state!='inactive'&&m.stop());ac&&ac.close()},250);
+recs.forEach(m=>m.start());
+try{await v.play()}catch(e){recs.forEach(m=>m.stop());busy=false;go.disabled=false;go.textContent='Split video';return toast('Playback was blocked, try again')}
+tick()}
 
 function blob(cv){return new Promise(r=>cv.toBlob(r,'image/jpeg',.95))}
 function dl(b,fn){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
-async function save(i){dl(await blob(tiles[i]),`${name}_${i+1}.jpg`);toast(`Saved tile ${i+1}`)}
-$('#zipBtn').onclick=async()=>{const z=new JSZip(),f=z.folder(`${name}_${mode}`);
-for(let i=0;i<tiles.length;i++)f.file(`${name}_${i+1}.jpg`,await blob(tiles[i]));
+async function save(i){if(isV){if(!blobs[i])return toast('Still recording, please wait');dl(blobs[i],`${name}_${i+1}.${ext}`)}
+else dl(await blob(tiles[i]),`${name}_${i+1}.jpg`);toast(`Saved tile ${i+1}`)}
+$('#zipBtn').onclick=async()=>{if(isV&&(busy||blobs.length<tiles.length))return toast('Still recording, please wait');
+const z=new JSZip(),f=z.folder(`${name}_${mode}`);
+for(let i=0;i<tiles.length;i++)f.file(`${name}_${i+1}.${isV?ext:'jpg'}`,isV?blobs[i]:await blob(tiles[i]));
 dl(await z.generateAsync({type:'blob'}),`${name}_${mode}.zip`);toast('Zip downloaded')};
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
 </script>
