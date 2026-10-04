@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MagicMall Gameshop – Photo grid splitter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#07080f;--ink:#f3f4fb;--mute:#9aa0ba;--line:rgba(255,255,255,.12);--glass:rgba(18,20,34,.62);--a:#7c5cff;--b:#2ee6c5;--c:#ff6fb1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.5 'Manrope',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.38;animation:drift 22s ease-in-out infinite alternate}
+.aurora i:nth-child(1){width:46vw;height:46vw;background:var(--a);left:-10vw;top:-12vw}
+.aurora i:nth-child(2){width:40vw;height:40vw;background:var(--b);right:-12vw;top:18vh;animation-delay:-8s;opacity:.26}
+.aurora i:nth-child(3){width:36vw;height:36vw;background:var(--c);left:25vw;bottom:-16vw;animation-delay:-14s;opacity:.22}
+@keyframes drift{to{transform:translate(8vw,6vh) scale(1.18)}}
+main{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:56px 20px 80px}
+h1{font:700 clamp(2.1rem,8.5vw,3.6rem)/1.05 'Unbounded',sans-serif;letter-spacing:-.03em;text-align:center}
+h1 span{display:inline-block;background:linear-gradient(100deg,var(--a),var(--b),var(--c),var(--a));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:flow 8s linear infinite}
+@keyframes flow{to{background-position:-300% 0}}
+.sub{text-align:center;color:var(--mute);margin:14px auto 22px;max-width:46ch}
+.card{background:var(--glass);border:1px solid var(--line);border-radius:28px;padding:26px;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.hero-in>*{animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+.hero-in>*:nth-child(2){animation-delay:.12s}.hero-in>*:nth-child(3){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.group{flex:1;min-width:200px}
+.label{font-size:.82rem;color:var(--mute);margin-bottom:8px}
+.seg{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{position:relative;z-index:1;background:none;border:0;color:var(--mute);font:600 .95rem 'Manrope',sans-serif;padding:10px 6px;border-radius:999px;cursor:pointer;transition:color .3s}
+.seg button[aria-pressed=true]{color:#fff}
+.pill{position:absolute;top:4px;bottom:4px;left:4px;border-radius:999px;background:linear-gradient(120deg,var(--a),#5b8cff);box-shadow:0 6px 20px rgba(124,92,255,.5);transition:transform .45s cubic-bezier(.3,1.3,.5,1),width .45s}
+button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+.drop{position:relative;display:grid;place-items:center;min-height:260px;border-radius:22px;border:2px dashed rgba(255,255,255,.22);cursor:pointer;overflow:hidden;text-align:center;transition:border-color .3s,background .3s,transform .3s}
+.drop:hover,.drop.over{border-color:var(--b);background:rgba(46,230,197,.07)}
+.drop.over{transform:scale(1.015)}
+.drop .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:rgba(255,255,255,.07);animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-7px)}}
+.drop b{display:block;font:500 1.05rem 'Unbounded',sans-serif}
+.drop small{color:var(--mute)}
+.drop.has{border-style:solid;border-color:var(--line);padding:0;min-height:0}
+.drop.has .empty{display:none}
+.stage{display:none;position:relative;width:100%}
+.drop.has .stage{display:block;animation:pop .6s cubic-bezier(.2,1.2,.4,1)}
+@keyframes pop{from{opacity:0;transform:scale(.92)}}
+.stage img{display:block;width:100%;max-height:420px;object-fit:contain;background:#000}
+.grid{position:absolute;inset:0;pointer-events:none}
+.grid i{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 8px rgba(0,0,0,.6);transform-origin:0 0;animation:draw .7s .3s cubic-bezier(.2,.8,.2,1) both}
+.grid i.v{top:0;bottom:0;width:1.5px}.grid i.h{left:0;right:0;height:1.5px;transform-origin:0 0}
+.grid i.v{animation-name:drawY}.grid i.h{animation-name:drawX}
+@keyframes drawY{from{transform:scaleY(0)}}@keyframes drawX{from{transform:scaleX(0)}}
+.chip{position:absolute;left:12px;bottom:12px;background:rgba(7,8,15,.75);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.8rem;backdrop-filter:blur(8px)}
+.btn{display:block;margin:22px auto 0;border:0;border-radius:999px;padding:16px 46px;font:700 1rem 'Unbounded',sans-serif;color:#07080f;background:linear-gradient(110deg,var(--b),#9bffe9);cursor:pointer;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,opacity .3s}
+.btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 14px 36px rgba(46,230,197,.4)}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.7) 50%,transparent 70%);transform:translateX(-120%)}
+.btn:hover:not(:disabled)::after{transform:translateX(120%);transition:transform .8s}
+#out{display:none;margin-top:46px}
+#out h2{font:700 1.5rem 'Unbounded',sans-serif;text-align:center;margin-bottom:6px}
+#out p{text-align:center;color:var(--mute);margin-bottom:24px;font-size:.92rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
+.tile{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);cursor:pointer;opacity:0;animation:tileIn .7s cubic-bezier(.2,.9,.3,1.1) forwards;transition:transform .35s,box-shadow .35s}
+@keyframes tileIn{from{opacity:0;transform:translateY(40px) rotate(var(--r,2deg)) scale(.85)}to{opacity:1}}
+.tile:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 22px 50px rgba(124,92,255,.4)}
+.tile canvas{display:block;width:100%;height:auto}
+.tile span{position:absolute;inset:auto 0 0;padding:26px 0 10px;text-align:center;font-size:.85rem;font-weight:600;background:linear-gradient(transparent,rgba(0,0,0,.8));opacity:0;transform:translateY(8px);transition:.3s}
+.tile:hover span,.tile:focus-visible span{opacity:1;transform:none}
+.foot{margin-top:40px;text-align:center;color:var(--mute);font-size:.85rem}
+.foot a{color:var(--ink);font-weight:600;text-decoration:none;background:linear-gradient(100deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.foot a:hover{text-decoration:underline}
+.tg{display:flex;width:fit-content;align-items:center;gap:10px;margin:0 auto 34px;padding:11px 24px;border-radius:999px;color:var(--ink);text-decoration:none;font-weight:600;background:rgba(42,171,238,.16);border:1px solid rgba(42,171,238,.55);transition:transform .3s,box-shadow .3s,background .3s}
+.tg svg{color:#2aabee;transition:transform .4s}
+.tg:hover{transform:translateY(-3px);background:rgba(42,171,238,.28);box-shadow:0 12px 32px rgba(42,171,238,.35)}
+.tg:hover svg{transform:translateX(3px) rotate(-12deg)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;background:var(--ink);color:#07080f;padding:12px 22px;border-radius:999px;font-weight:600;z-index:9;transition:.4s cubic-bezier(.2,1.2,.4,1);pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:520px){.card{padding:18px;border-radius:22px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div class="aurora"><i></i><i></i><i></i></div>
+<main>
+  <header class="hero-in">
+    <h1><span>MagicMall<br>Gameshop</span></h1>
+    <p class="sub">Free photo grid splitter. Cut one picture into a seamless grid for your profile. It all runs in your browser, so your image never leaves your device.</p>
+    <a class="tg" id="tgTop" href="#" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.1a1.3 1.3 0 0 0-1.4-.2L2.8 10.8c-1.1.4-1.1 1.1-.2 1.4l4.5 1.4 1.7 5.3c.2.6.4.8.8.8.3 0 .5-.1.7-.3l2.2-2.1 4.5 3.3c.8.5 1.4.2 1.6-.8L22.4 5.3c.3-1.1-.2-1.6-.5-1.2zM9 13.6l9.2-5.8c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.3L9 13.6z"/></svg>Join our Telegram</a>
+  </header>
+  <section class="card hero-in" style="animation-delay:.3s">
+    <div class="row">
+      <div class="group"><div class="label">Grid</div>
+        <div class="seg" id="mode"><span class="pill"></span>
+          <button aria-pressed="true" data-v="1x3">1×3</button><button aria-pressed="false" data-v="2x3">2×3</button><button aria-pressed="false" data-v="3x3">3×3</button>
+        </div></div>
+      <div class="group"><div class="label">Tile size</div>
+        <div class="seg" id="fmt"><span class="pill"></span>
+          <button aria-pressed="true" data-v="post">Post 4:5</button><button aria-pressed="false" data-v="story">Story 9:16</button>
+        </div></div>
+      <div class="group" id="bgWrap" style="display:none"><div class="label">Story bars</div>
+        <div class="seg" id="bg"><span class="pill"></span>
+          <button aria-pressed="true" data-v="#ffffff">White</button><button aria-pressed="false" data-v="#000000">Black</button>
+        </div></div>
+    </div>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an image">
+      <div class="empty"><div class="ring"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
+        <b>Drop an image here</b><small>or tap to browse · JPG, PNG, WebP</small></div>
+      <div class="stage"><img id="pv" alt="Your uploaded image"><div class="grid" id="gridOv"></div><div class="chip" id="chip"></div></div>
+      <input type="file" id="file" accept="image/*" hidden>
+    </div>
+    <button class="btn" id="go" disabled>Split image</button>
+  </section>
+
+  <section id="out">
+    <h2>Your tiles</h2>
+    <p>Tap a tile to save it, or grab everything at once. Post them in reverse order so the grid lines up.</p>
+    <div class="tiles" id="tiles"></div>
+    <button class="btn" id="zipBtn">Download all (.zip)</button>
+  </section>
+  <p class="foot">MagicMall Gameshop · powered by <a href="https://t.me/blackflame404" target="_blank" rel="noopener">@blackflame404</a></p>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const TELEGRAM_URL='https://t.me/YOUR_CHANNEL'; // <- put your channel link here
+const W=1080,H=1350,SH=1920;
+let mode='1x3',fmt='post',bg='#ffffff',img=null,name='image',tiles=[];
+const $=s=>document.querySelector(s);
+
+document.getElementById('tgTop').href=TELEGRAM_URL;
+/* starfield */
+(function(){const c=$('#sky'),x=c.getContext('2d');let st=[],w,h;
+function init(){w=c.width=innerWidth;h=c.height=innerHeight;st=Array.from({length:Math.min(220,w*h/7000|0)},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.3+.3,p:Math.random()*6.3,s:Math.random()*.02+.005}))}
+function f(t){x.clearRect(0,0,w,h);for(const s of st){s.p+=s.s;x.globalAlpha=.35+.65*Math.abs(Math.sin(s.p));x.fillStyle='#fff';x.beginPath();x.arc(s.x,s.y,s.r,0,6.3);x.fill();s.y-=.05;if(s.y<0)s.y=h}requestAnimationFrame(f)}
+addEventListener('resize',init);init();f()})();
+
+/* segmented controls with sliding pill */
+function seg(id,cb){const el=$(id),pill=el.querySelector('.pill'),bs=[...el.querySelectorAll('button')];
+function place(){const a=bs.find(b=>b.getAttribute('aria-pressed')=='true');pill.style.width=a.offsetWidth+'px';pill.style.transform=`translateX(${a.offsetLeft-4}px)`}
+bs.forEach(b=>b.onclick=()=>{bs.forEach(o=>o.setAttribute('aria-pressed',o===b));place();cb(b.dataset.v)});
+new ResizeObserver(place).observe(el);place();return place}
+const pm=seg('#mode',v=>{mode=v;drawGrid();reset()});
+seg('#fmt',v=>{fmt=v;$('#bgWrap').style.display=v=='story'?'':'none';reset()});
+seg('#bg',v=>{bg=v;reset()});
+new MutationObserver(()=>{}).observe(document.body,{});
+function reset(){$('#out').style.display='none'}
+
+/* upload */
+const drop=$('#drop'),file=$('#file');
+drop.onclick=e=>{if(e.target!==file)file.click()};
+drop.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();file.click()}};
+file.onchange=()=>file.files[0]&&load(file.files[0]);
+['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];f&&load(f)});
+function load(f){if(!f.type.startsWith('image/'))return toast('Please choose an image file');
+name=f.name.replace(/\.[^.]+$/,'');const u=URL.createObjectURL(f),i=new Image();
+i.onload=()=>{img=i;$('#pv').src=u;drop.classList.add('has');$('#go').disabled=false;
+$('#chip').textContent=`${f.name} · ${i.naturalWidth}×${i.naturalHeight}`;drawGrid();reset();
+if(i.naturalWidth<parseInt(mode[2])*W)toast('Small image: tiles will be upscaled and may look soft')};
+i.onerror=()=>toast('Could not read that image');i.src=u}
+function drawGrid(){const [r,c]=mode.split('x').map(Number),g=$('#gridOv');g.innerHTML='';
+for(let k=1;k<c;k++)g.insertAdjacentHTML('beforeend',`<i class="v" style="left:${k/c*100}%"></i>`);
+for(let k=1;k<r;k++)g.insertAdjacentHTML('beforeend',`<i class="h" style="top:${k/r*100}%"></i>`)}
+drawGrid();
+
+/* split */
+$('#go').onclick=()=>{if(!img)return;const [r,c]=mode.split('x').map(Number),tw=c*W,th=r*H;
+/* center-crop to the grid's aspect ratio so nothing is stretched */
+const ar=tw/th,ia=img.naturalWidth/img.naturalHeight;let sw=img.naturalWidth,sh=img.naturalHeight,sx=0,sy=0;
+if(ia>ar){sw=sh*ar;sx=(img.naturalWidth-sw)/2}else{sh=sw/ar;sy=(img.naturalHeight-sh)/2}
+const big=document.createElement('canvas');big.width=tw;big.height=th;const bx=big.getContext('2d');
+bx.imageSmoothingQuality='high';bx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
+const box=$('#tiles');box.innerHTML='';tiles=[];let n=0;
+for(let y=0;y<r;y++)for(let x=0;x<c;x++){const cv=document.createElement('canvas'),story=fmt=='story';
+cv.width=W;cv.height=story?SH:H;const cx=cv.getContext('2d');
+if(story){cx.fillStyle=bg;cx.fillRect(0,0,W,SH)}
+cx.drawImage(big,x*W,y*H,W,H,0,story?(SH-H)/2:0,W,H);
+tiles.push(cv);const idx=n++,d=document.createElement('div');d.className='tile';d.tabIndex=0;
+d.style.animationDelay=idx*.09+'s';d.style.setProperty('--r',(idx%2?-3:3)+'deg');
+d.innerHTML='<span>Save tile '+(idx+1)+'</span>';d.prepend(cv);
+d.onclick=()=>save(idx);d.onkeydown=e=>{if(e.key=='Enter')save(idx)};box.appendChild(d)}
+const out=$('#out');out.style.display='block';setTimeout(()=>out.scrollIntoView({behavior:'smooth',block:'start'}),150)};
+
+function blob(cv){return new Promise(r=>cv.toBlob(r,'image/jpeg',.95))}
+function dl(b,fn){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+async function save(i){dl(await blob(tiles[i]),`${name}_${i+1}.jpg`);toast(`Saved tile ${i+1}`)}
+$('#zipBtn').onclick=async()=>{const z=new JSZip(),f=z.folder(`${name}_${mode}`);
+for(let i=0;i<tiles.length;i++)f.file(`${name}_${i+1}.jpg`,await blob(tiles[i]));
+dl(await z.generateAsync({type:'blob'}),`${name}_${mode}.zip`);toast('Zip downloaded')};
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
+</script>
+</body>
+</html>
