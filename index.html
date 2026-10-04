@@ -56,6 +56,7 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
 .grid i.v{animation-name:drawY}.grid i.h{animation-name:drawX}
 @keyframes drawY{from{transform:scaleY(0)}}@keyframes drawX{from{transform:scaleX(0)}}
 .chip{position:absolute;left:12px;top:12px;background:rgba(7,8,15,.75);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.8rem;backdrop-filter:blur(8px);pointer-events:none}
+.hint{margin-top:14px;font-size:.85rem;color:var(--mute);text-align:center;line-height:1.45}
 .btn{display:block;margin:22px auto 0;border:0;border-radius:999px;padding:16px 46px;font:700 1rem 'Unbounded',sans-serif;color:#07080f;background:linear-gradient(110deg,var(--b),#9bffe9);cursor:pointer;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,opacity .3s}
 .btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 14px 36px rgba(46,230,197,.4)}
 .btn:active:not(:disabled){transform:scale(.97)}
@@ -104,7 +105,15 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
         <div class="seg" id="fmt"><span class="pill"></span>
           <button aria-pressed="true" data-v="post">Post 4:5</button><button aria-pressed="false" data-v="story">Story 9:16</button>
         </div></div>
-      <div class="group" id="bgWrap" style="display:none"><div class="label">Story bars</div>
+      <div class="group"><div class="label">Picture fit</div>
+        <div class="seg" id="fit"><span class="pill"></span>
+          <button aria-pressed="true" data-v="full">Full (no crop)</button><button aria-pressed="false" data-v="crop">Fill (crop)</button>
+        </div></div>
+      <div class="group"><div class="label">Tile quality</div>
+        <div class="seg" id="q"><span class="pill"></span>
+          <button aria-pressed="true" data-v="1080">1080 HD</button><button aria-pressed="false" data-v="720">720 Fast</button>
+        </div></div>
+      <div class="group" id="bgWrap" style="display:none"><div class="label">Bar / background color</div>
         <div class="seg" id="bg"><span class="pill"></span>
           <button aria-pressed="true" data-v="#ffffff">White</button><button aria-pressed="false" data-v="#000000">Black</button>
         </div></div>
@@ -119,6 +128,7 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
       <div class="stage"><img id="pv" alt="Your uploaded image"><video id="pvv" muted loop playsinline autoplay style="display:none"></video><div class="grid" id="gridOv"></div><div class="chip" id="chip"></div></div>
       <input type="file" id="file" accept="image/*,video/*" hidden>
     </div>
+    <p class="hint" id="rec"></p>
     <button class="btn" id="go" disabled>Split</button>
   </section>
 
@@ -133,8 +143,8 @@ button:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(-
 <div class="toast" id="toast" role="status"></div>
 <script>
 const TELEGRAM_URL='https://t.me/Magic_Mall_Game_Shop'; // <- put your channel link here
-const W=1080,H=1350,SH=1920;
-let mode='1x3',fmt='post',bg='#ffffff',aud='1',img=null,vurl=null,isV=false,busy=false,name='image',tiles=[],blobs=[],ext='mp4';
+let W=1080,H=1350,SH=1920;
+let fit='full',fw=0,fh=0,mode='1x3',fmt='post',bg='#ffffff',aud='1',img=null,vurl=null,isV=false,busy=false,name='image',tiles=[],blobs=[],ext='mp4';
 const $=s=>document.querySelector(s);
 
 document.getElementById('tgTop').href=TELEGRAM_URL;
@@ -149,8 +159,9 @@ function seg(id,cb){const el=$(id),pill=el.querySelector('.pill'),bs=[...el.quer
 function place(){const a=bs.find(b=>b.getAttribute('aria-pressed')=='true');if(!a.offsetWidth)return;pill.style.width=a.offsetWidth+'px';pill.style.transform=`translateX(${a.offsetLeft-4}px)`}
 bs.forEach(b=>b.onclick=()=>{if(busy)return toast('Wait until recording finishes');bs.forEach(o=>o.setAttribute('aria-pressed',o===b));place();cb(b.dataset.v)});
 new ResizeObserver(place).observe(el);place();return place}
-seg('#mode',v=>{mode=v;drawGrid();reset()});
-seg('#fmt',v=>{fmt=v;$('#bgWrap').style.display=v=='story'?'':'none';reset()});
+seg('#mode',v=>{mode=v;drawGrid();rec();reset()});
+seg('#fmt',v=>{fmt=v;bgShow();rec();reset()});seg('#fit',v=>{fit=v;bgShow();rec();reset()});seg('#q',v=>{W=+v;H=Math.round(W*1.25);SH=Math.round(W*16/9/2)*2;rec();reset()});
+function bgShow(){$('#bgWrap').style.display=(fmt=='story'||fit=='full')?'':'none'}bgShow();rec();
 seg('#bg',v=>{bg=v;reset()});
 seg('#au',v=>{aud=v;reset()});
 function reset(){$('#out').style.display='none'}
@@ -163,7 +174,7 @@ file.onchange=()=>file.files[0]&&load(file.files[0]);
 ['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];f&&load(f)});
-function ready(f,w,h){$('#go').disabled=false;drop.classList.add('has');$('#chip').textContent=`${f.name} · ${w}×${h}`;drawGrid();reset();
+function ready(f,w,h){fw=w;fh=h;rec();$('#go').disabled=false;drop.classList.add('has');$('#chip').textContent=`${f.name} · ${w}×${h}`;drawGrid();reset();
 $('#auWrap').style.display=isV?'':'none';$('#go').textContent=isV?'Split video':'Split image'}
 function load(f){if(busy)return toast('Wait until recording finishes');
 const v=f.type.startsWith('video/');if(!v&&!f.type.startsWith('image/'))return toast('Please choose an image or video');
@@ -181,10 +192,17 @@ for(let k=1;k<r;k++)g.insertAdjacentHTML('beforeend',`<i class="h" style="top:${
 drawGrid();
 
 /* shared helpers */
-function crop(w,h,r,c){const ar=c*W/(r*H),ia=w/h;let sw=w,sh=h,sx=0,sy=0;
-if(ia>ar){sw=sh*ar;sx=(w-sw)/2}else{sh=sw/ar;sy=(h-sh)/2}return{sw,sh,sx,sy}}
+function crop(w,h,r,c){const tw=c*W,th=r*H,ar=tw/th,ia=w/h;
+if(fit=='full'){const s=Math.min(tw/w,th/h),dw=w*s,dh=h*s;return{sx:0,sy:0,sw:w,sh:h,dx:(tw-dw)/2,dy:(th-dh)/2,dw,dh}}
+let sw=w,sh=h,sx=0,sy=0;if(ia>ar){sw=sh*ar;sx=(w-sw)/2}else{sh=sw/ar;sy=(h-sh)/2}return{sx,sy,sw,sh,dx:0,dy:0,dw:tw,dh:th}}
+function rec(){const [r,c]=mode.split('x').map(Number),tw=c*1080,th=r*1350;
+let t=`Best source size: ${tw}×${th}px (ratio ${c*4}:${r*5}). Tiles export at ${W}×${fmt=='story'?SH:H}.`;
+if(fw){const p=Math.round((1-Math.min(tw/th/(fw/fh),(fw/fh)/(tw/th)))*100),ok=p<=2;
+t+=` Yours is ${fw}×${fh}: `+(ok?'a perfect fit.':fit=='full'?`nothing is cropped, bars fill ${p}% of the grid.`:`${p}% of the picture will be trimmed.`);
+if(fw<c*W)t+=' It is smaller than the grid, so it will be upscaled and may look soft.'}
+$('#rec').textContent=t}
 function mkTile(idx){const story=fmt=='story',cv=document.createElement('canvas');cv.width=W;cv.height=story?SH:H;
-const cx=cv.getContext('2d');if(story){cx.fillStyle=bg;cx.fillRect(0,0,W,SH)}
+const cx=cv.getContext('2d');if(story||fit=='full'){cx.fillStyle=bg;cx.fillRect(0,0,cv.width,cv.height)}
 tiles.push(cv);const d=document.createElement('div');d.className='tile';d.tabIndex=0;
 d.style.animationDelay=idx*.09+'s';d.style.setProperty('--r',(idx%2?-3:3)+'deg');
 d.innerHTML='<span>Save tile '+(idx+1)+'</span>';d.prepend(cv);
@@ -194,9 +212,9 @@ function showOut(){const out=$('#out');out.style.display='block';setTimeout(()=>
 /* split */
 $('#go').onclick=()=>{if(busy)return;const [r,c]=mode.split('x').map(Number);$('#tiles').innerHTML='';tiles=[];blobs=[];
 if(isV)return splitVideo(r,c);if(!img)return;
-const tw=c*W,th=r*H,{sw,sh,sx,sy}=crop(img.naturalWidth,img.naturalHeight,r,c);
+const tw=c*W,th=r*H,K=crop(img.naturalWidth,img.naturalHeight,r,c);
 const big=document.createElement('canvas');big.width=tw;big.height=th;const bx=big.getContext('2d');
-bx.imageSmoothingQuality='high';bx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
+bx.imageSmoothingQuality='high';if(fit=='full'){bx.fillStyle=bg;bx.fillRect(0,0,tw,th)}bx.drawImage(img,K.sx,K.sy,K.sw,K.sh,K.dx,K.dy,K.dw,K.dh);
 $('#outTxt').textContent='Tap a tile to save it, or grab everything at once. Post them in reverse order so the grid lines up.';
 let n=0;for(let y=0;y<r;y++)for(let x=0;x<c;x++){const t=mkTile(n++);t.cx.drawImage(big,x*W,y*H,W,H,0,t.off,W,H)}
 showOut()};
@@ -208,7 +226,7 @@ try{await new Promise((ok,no)=>{v.onloadeddata=ok;v.onerror=no;v.load()})}catch(
 const mime=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
 ext=mime.includes('mp4')?'mp4':'webm';
 if(aud=='1'){try{ac=new AudioContext();const s=ac.createMediaElementSource(v),d=ac.createMediaStreamDestination();s.connect(d);track=d.stream.getAudioTracks()[0];await ac.resume()}catch(e){track=null}}
-const {sw,sh,sx,sy}=crop(v.videoWidth,v.videoHeight,r,c),cells=[],recs=[];let n=0,left=r*c;
+const K=crop(v.videoWidth,v.videoHeight,r,c),cells=[],recs=[];let n=0,left=r*c;
 for(let y=0;y<r;y++)for(let x=0;x<c;x++){const t=mkTile(n),st=t.cx.canvas.captureStream(30);
 if(n==0&&track)st.addTrack(track);
 const mr=new MediaRecorder(st,mime?{mimeType:mime,videoBitsPerSecond:6e6}:{}),ch=[],i=n;
@@ -217,7 +235,7 @@ mr.onstop=()=>{blobs[i]=new Blob(ch,{type:mr.mimeType||mime});if(!--left){busy=f
 $('#outTxt').textContent='Done! Tap a tile to save it as .'+ext+', or grab everything at once. Post them in reverse order so the grid lines up.';toast('All tiles ready')}};
 cells.push({...t,x,y});recs.push(mr);n++}
 $('#outTxt').textContent='Recording… keep this tab open and visible until it finishes.';showOut();
-const dw=sw/c,dh=sh/r,tick=()=>{if(v.ended)return;for(const k of cells)k.cx.drawImage(v,sx+k.x*dw,sy+k.y*dh,dw,dh,0,k.off,W,H);
+const tick=()=>{if(v.ended)return;for(const k of cells){const q=k.cx;q.save();q.beginPath();q.rect(0,k.off,W,H);q.clip();q.drawImage(v,K.sx,K.sy,K.sw,K.sh,K.dx-k.x*W,K.dy-k.y*H+k.off,K.dw,K.dh);q.restore()}
 go.textContent='Recording '+Math.min(99,Math.round(v.currentTime/v.duration*100))+'%';
 v.requestVideoFrameCallback?v.requestVideoFrameCallback(tick):requestAnimationFrame(tick)};
 v.onended=()=>setTimeout(()=>{recs.forEach(m=>m.state!='inactive'&&m.stop());ac&&ac.close()},250);
